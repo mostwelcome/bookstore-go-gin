@@ -23,3 +23,40 @@ func ConnectDatabase() {
 
 	DB = database
 }
+
+// GetDB helps you to get a connection
+func GetDB() *gorm.DB {
+	return DB
+}
+
+//Close database connection
+func CloseDatabase() {
+	database, error := DB.DB()
+
+	if error != nil {
+		panic("Got database error")
+	}
+
+	//close
+	database.Close()
+}
+
+// clear table after test
+func ClearTable() {
+	DB.Exec("DELETE FROM books")
+	DB.Exec("ALTER SEQUENCE books_id_seq RESTART WITH 1")
+}
+
+//insert test book
+func InsertTestBook() (Book, error) {
+	b := Book{
+		Author: "test",
+		Title:  "test",
+	}
+
+	if err := DB.Create(&b).Error; err != nil {
+		return b, err
+	}
+
+	return b, nil
+}

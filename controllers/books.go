@@ -14,7 +14,12 @@ import (
 func FindBooks(c *gin.Context) {
 	var books []models.Book
 	models.DB.Find(&books)
-	c.JSON(http.StatusOK, gin.H{"data": books})
+	c.JSON(http.StatusOK, books)
+}
+
+// Handle home page
+func HomePageHandler(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"message": "Welcome to the Bookstore listing API with Golang"})
 }
 
 // POST /books
@@ -31,7 +36,7 @@ func CreateBook(c *gin.Context) {
 	book := models.Book{Title: input.Title, Author: input.Author}
 	models.DB.Create(&book)
 
-	c.JSON(http.StatusOK, gin.H{"data": book})
+	c.JSON(http.StatusCreated, gin.H{"data": book})
 }
 
 // GET /books/:id
@@ -44,7 +49,7 @@ func FindBook(c *gin.Context) { // Get model if exist
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": book})
+	c.JSON(http.StatusOK, book)
 }
 
 // PATCH /books/:id

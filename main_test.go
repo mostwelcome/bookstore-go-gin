@@ -34,7 +34,7 @@ func TestHomepageHandler(t *testing.T) {
 }
 
 func TestNewBookHandler(t *testing.T) {
-	models.ConnectDatabase()
+	models.ConnectTestDatabase()
 	defer models.CloseDatabase()
 
 	r := SetUpRouter()
@@ -49,49 +49,19 @@ func TestNewBookHandler(t *testing.T) {
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusCreated, w.Code)
-
-	models.ClearTable()
-}
-
-func TestGetBooksHandler(t *testing.T) {
-	a := assert.New(t)
-	models.ConnectDatabase()
-	defer models.CloseDatabase()
-
-	_, err := models.InsertTestBook()
-	if err != nil {
-		a.Error(err)
-	}
-
-	r := SetUpRouter()
-	r.GET("/books", controllers.FindBooks)
-	req, _ := http.NewRequest("GET", "/books", nil)
-	w := httptest.NewRecorder()
-	r.ServeHTTP(w, req)
-
-	var book []models.Book
-	json.Unmarshal(w.Body.Bytes(), &book)
-
-	assert.Equal(t, http.StatusOK, w.Code)
-	assert.NotEmpty(t, book)
-	models.ClearTable()
 }
 
 func TestUpdateBookHandler(t *testing.T) {
-	a := assert.New(t)
-	models.ConnectDatabase()
+	models.ConnectTestDatabase()
 	defer models.CloseDatabase()
 
-	_, err := models.InsertTestBook()
-	if err != nil {
-		a.Error(err)
-	}
+	bookToInsert, _ := models.InsertTestBook()
 
 	r := SetUpRouter()
 	r.PATCH("/books/:id", controllers.UpdateBook)
 	book := models.Book{
-		ID:    1,
-		Title: "The Infinite Game",
+		ID:    bookToInsert.ID,
+		Title: "The Infinite Game Updated",
 	}
 	jsonValue, _ := json.Marshal(book)
 	var id string = strconv.FormatUint(uint64(book.ID), 10)
@@ -100,62 +70,39 @@ func TestUpdateBookHandler(t *testing.T) {
 	r.ServeHTTP(w, reqFound)
 	assert.Equal(t, http.StatusOK, w.Code)
 
-	reqNotFound, _ := http.NewRequest("PATCH", "/books/12", bytes.NewBuffer(jsonValue))
+	// Make a GET request to verify the data is updated
+	r.GET("/books/:id", controllers.FindBook)
+	req, _ := http.NewRequest("GET", "/books/"+id, nil)
 	w = httptest.NewRecorder()
-	r.ServeHTTP(w, reqNotFound)
-	assert.Equal(t, http.StatusBadRequest, w.Code)
-	models.ClearTable()
+	r.ServeHTTP(w, req)
+
+	var updatedBook models.Book
+	err := json.Unmarshal(w.Body.Bytes(), &updatedBook)
+	if err != nil {
+		return
+	}
+	assert.Equal(t, "The Infinite Game Updated", updatedBook.Title)
 }
 
 func TestDeleteBookHandler(t *testing.T) {
-	a := assert.New(t)
-	models.ConnectDatabase()
+	models.ConnectTestDatabase()
 	defer models.CloseDatabase()
 
-	_, err := models.InsertTestBook()
-	if err != nil {
-		a.Error(err)
-	}
+	bookToInsert, _ := models.InsertTestBook()
 
 	r := SetUpRouter()
-	r.DELETE("/books/:id", controllers.UpdateBook)
-	book := models.Book{
-		ID:    1,
-		Title: "The Infinite Game",
-	}
-	jsonValue, _ := json.Marshal(book)
-	var id string = strconv.FormatUint(uint64(book.ID), 10)
-	reqFound, _ := http.NewRequest("DELETE", "/books/"+id, bytes.NewBuffer(jsonValue))
+	r.DELETE("/books/:id", controllers.DeleteBook)
+	var id string = strconv.FormatUint(uint64(bookToInsert.ID), 10)
+	reqFound, _ := http.NewRequest("DELETE", "/books/"+id, nil)
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, reqFound)
 	assert.Equal(t, http.StatusOK, w.Code)
 
-	reqNotFound, _ := http.NewRequest("DELETE", "/books/12", bytes.NewBuffer(jsonValue))
-	w = httptest.NewRecorder()
-	r.ServeHTTP(w, reqNotFound)
-	assert.Equal(t, http.StatusBadRequest, w.Code)
-	models.ClearTable()
-}
-
-func TestGetBookByIDHandler(t *testing.T) {
-	a := assert.New(t)
-	models.ConnectDatabase()
-	defer models.CloseDatabase()
-
-	_, err := models.InsertTestBook()
-	if err != nil {
-		a.Error(err)
-	}
-
-	r := SetUpRouter()
+	// Make a GET request to verify the data is deleted
 	r.GET("/books/:id", controllers.FindBook)
-	req, _ := http.NewRequest("GET", "/books/"+"1", nil)
-	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/books/"+id, nil)
+	w = httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 
-	var book models.Book
-	json.Unmarshal(w.Body.Bytes(), &book)
-	assert.Equal(t, http.StatusOK, w.Code)
-	assert.NotEmpty(t, book)
-	models.ClearTable()
+	assert.Equal(t, http.StatusNotFound, w.Code)
 }

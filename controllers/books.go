@@ -9,21 +9,19 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// GET /books
-// Get all books
+// FindBooks GET /books
 func FindBooks(c *gin.Context) {
 	var books []models.Book
 	models.DB.Find(&books)
 	c.JSON(http.StatusOK, books)
 }
 
-// Handle home page
+// HomePageHandler Handle home page
 func HomePageHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Welcome to the Bookstore listing API with Golang"})
 }
 
-// POST /books
-// Create new book
+// CreateBook POST /books
 func CreateBook(c *gin.Context) {
 	// Validate input
 	var input models.CreateBookInput
@@ -39,21 +37,19 @@ func CreateBook(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"data": book})
 }
 
-// GET /books/:id
-// Find a book
+// FindBook GET /books/:id
 func FindBook(c *gin.Context) { // Get model if exist
 	var book models.Book
 
 	if err := models.DB.Where("id = ?", c.Param("id")).First(&book).Error; err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Record not found!"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "Record not found!"})
 		return
 	}
 
 	c.JSON(http.StatusOK, book)
 }
 
-// PATCH /books/:id
-// Update a book
+// UpdateBook PATCH /books/:id
 func UpdateBook(c *gin.Context) {
 	// Get model if exist
 	var book models.Book
@@ -75,13 +71,12 @@ func UpdateBook(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": book})
 }
 
-// DELETE /books/:id
-// Delete a book
+// DeleteBook DELETE /books/:id
 func DeleteBook(c *gin.Context) {
 	// Get model if exist
 	var book models.Book
 	if err := models.DB.Where("id = ?", c.Param("id")).First(&book).Error; err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Record not found!"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "Record not found!"})
 		return
 	}
 

@@ -2,7 +2,6 @@ package models
 
 import (
 	"gorm.io/driver/sqlite"
-	_ "gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
@@ -29,7 +28,7 @@ func GetDB() *gorm.DB {
 	return DB
 }
 
-//Close database connection
+// CloseDatabase Close database connection
 func CloseDatabase() {
 	database, error := DB.DB()
 
@@ -41,13 +40,13 @@ func CloseDatabase() {
 	database.Close()
 }
 
-// clear table after test
-func ClearTable() {
-	DB.Exec("DELETE FROM books")
-	DB.Exec("ALTER SEQUENCE books_id_seq RESTART WITH 1")
-}
+//// ClearTable clear table after test
+//func ClearTable() {
+//	DB.Exec("DELETE FROM books")
+//	DB.Exec("ALTER SEQUENCE books_id_seq RESTART WITH 1")
+//}
 
-//insert test book
+// InsertTestBook insert test book
 func InsertTestBook() (Book, error) {
 	b := Book{
 		Author: "test",
@@ -59,4 +58,19 @@ func InsertTestBook() (Book, error) {
 	}
 
 	return b, nil
+}
+
+func ConnectTestDatabase() {
+	database, err := gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{})
+
+	if err != nil {
+		panic("Failed to connect to database!")
+	}
+
+	err = database.AutoMigrate(&Book{})
+	if err != nil {
+		return
+	}
+
+	DB = database
 }

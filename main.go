@@ -12,10 +12,14 @@ func main() {
 
 	models.ConnectDatabase()
 
+	r.GET("/", controllers.HomePageHandler)
 	r.GET("/books", controllers.FindBooks)         // get list of books
 	r.POST("/books", controllers.CreateBook)       // add new book
 	r.GET("/books/:id", controllers.FindBook)      // get book by id
 	r.PATCH("/books/:id", controllers.UpdateBook)  //update book by id
 	r.DELETE("/books/:id", controllers.DeleteBook) // delete book by id
-	r.Run()
+	err := r.Run()
+	if err != nil {
+		return
+	}
 }
